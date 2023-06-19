@@ -1,0 +1,15 @@
+Required Cmds
+-------------------------------------------------------------
+python ../manage.py migrate
+python ../manage.py seed_categories
+python ../manage.py runserver
+
+
+All Cmds
+-------------------------------------------------------------
+python ../manage.py runserver
+python ../manage.py makemigrations
+python ../manage.py makemigrations talabaty
+python ../manage.py makemigrations --merge
+python ../manage.py migrate
+python ../manage.py seed_categories
