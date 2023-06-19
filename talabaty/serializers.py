@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, UserProfile, Category, Menu
+from .models import User, UserProfile, Category, Menu, OrderMenu, Order
 from urllib.parse import urljoin, quote
 from django.conf import settings
 
@@ -101,4 +101,50 @@ class MenuSerializer(serializers.ModelSerializer):
         representation['user'] = UserSerializer(instance.user).data
         representation['category'] = CategorySerializer(instance.category).data
         return representation
+    
+class ShopSerializer(serializers.ModelSerializer):
+    menus = MenuSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone', 'first_name', 'role', 'menus']
+        
+class OrderMenuSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderMenu
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['menu'] = MenuSerializer(instance.menu, context=self.context).data
+        return representation
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['shop'] = UserSerializer(instance.shop).data
+        representation['customer'] = UserSerializer(instance.customer).data
+        representation['rider'] = UserSerializer(instance.rider).data
+        
+        order_menus = OrderMenu.objects.filter(order=instance)
+        order_menu_serializer = OrderMenuSerializer(order_menus, many=True, context=self.context)
+        representation['order_menus'] = order_menu_serializer.data
+        
+        return representation
+
+class UserOrderSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone', 'first_name', 'role', 'orders']
+
+    def get_orders(self, obj):
+        orders = Order.objects.filter(customer=obj).order_by('-id')
+        order_serializer = OrderSerializer(orders, many=True, context=self.context)
+        return order_serializer.data
 

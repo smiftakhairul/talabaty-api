@@ -2,15 +2,17 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, viewsets
-from .serializers import RegisterSerializer, UserSerializer, UserProfileSerializer, UserUpdateSerializer, CategorySerializer, MenuSerializer
+from .serializers import RegisterSerializer, UserSerializer, UserProfileSerializer, UserUpdateSerializer, CategorySerializer, MenuSerializer, ShopSerializer, OrderSerializer, UserOrderSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes, api_view
-from .models import UserProfile, User, Category, Menu
+from .models import UserProfile, User, Category, Menu, OrderMenu, Order
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.pagination import PageNumberPagination
 from math import ceil
+from django.db.models import Count
+import json
 
 class MenuPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
@@ -142,4 +144,56 @@ class MenuListAPIView(generics.ListAPIView):
 class MenuDeleteAPIView(generics.DestroyAPIView):
     queryset = Menu.objects.all()
     serializer_class = MenuSerializer
+    
+class ShopListAPIView(generics.ListAPIView):
+    queryset = User.objects.filter(role='shop')
+    serializer_class = ShopSerializer
 
+class ShopDetailAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.filter(role='shop')
+    serializer_class = ShopSerializer
+    lookup_field = 'id'
+    
+class OrderCreateAPIView(generics.CreateAPIView):
+    serializer_class = OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        order_menus_data = json.loads(request.data.get('order_menus', '[]'))
+        # Create the Order instance
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        
+        # Create OrderMenu instances
+        order_menus = []
+        for order_menu_data in order_menus_data:
+            order_menu = OrderMenu.objects.create(
+                order_id=order.id,  # Set the order_id later after creating the Order instance
+                menu_id=order_menu_data['menu_id'],
+                unit_price=order_menu_data['unit_price'],
+                quantity=order_menu_data['quantity'],
+                total_price=order_menu_data['total_price']
+            )
+            order_menus.append(order_menu)
+
+        # Associate the OrderMenu instances with the Order
+        for order_menu in order_menus:
+            order_menu.order = order
+            order_menu.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class OrderListByCustomerAPIView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            return Order.objects.filter(customer_id=user_id)
+        else:
+            return Order.objects.none()
+
+class UserOrderAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserOrderSerializer
+    lookup_field = 'id'

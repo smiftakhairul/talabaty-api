@@ -54,3 +54,30 @@ class Menu(models.Model):
             self.profile_images = profile_images_paths
         
         super().save(*args, **kwargs)
+
+class Order(models.Model):
+    uid = models.CharField(max_length=255, unique=True)
+    amount = models.CharField(max_length=255)
+    delivery_charge = models.CharField(max_length=255, null=True, default='0')
+    net_amount = models.CharField(max_length=255)
+    shop = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shop_orders', null=True)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='customer_orders', null=True)
+    rider = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rider_orders', null=True)
+    status = models.CharField(max_length=255, default='pending')
+    location = models.CharField(max_length=255)
+    phone = models.CharField(max_length=255)
+    remarks = models.TextField(null=True)
+    estimated_time = models.CharField(max_length=255, null=True)
+    delivery_charge = models.CharField(max_length=255, null=True)
+    completed_at = models.CharField(max_length=255, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class OrderMenu(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
+    unit_price = models.CharField(max_length=255)
+    quantity = models.IntegerField()
+    total_price = models.CharField(max_length=255)
+    

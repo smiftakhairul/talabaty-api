@@ -18,6 +18,13 @@ urlpatterns = [
     path('api/menus/create/', views.MenuListCreateAPIView.as_view(), name='menu-create'),
     path('api/menus/<int:pk>/update/', views.MenuUpdateAPIView.as_view(), name='menu-update'),
     path('api/menus/<int:pk>/delete/', views.MenuDeleteAPIView.as_view(), name='menu-delete'),
+    
+    path('api/shops/', views.ShopListAPIView.as_view(), name='shop-menu-list'),
+    path('api/shops/<int:id>/', views.ShopDetailAPIView.as_view(), name='shop-detail'),
+    
+    path('api/orders/create/', views.OrderCreateAPIView.as_view(), name='order-create'),
+    
+    path('api/user-orders/<int:id>/', views.UserOrderAPIView.as_view(), name='user-detail'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.ADMIN_ENABLED:
