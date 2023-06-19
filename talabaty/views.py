@@ -128,3 +128,7 @@ class MenuListAPIView(generics.ListAPIView):
             'results': data
         })
     
+class MenuDeleteAPIView(generics.DestroyAPIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
+

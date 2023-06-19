@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/menus/<int:pk>/', views.MenuRetrieveAPIView.as_view(), name='menu-retrieve'),
     path('api/menus/create/', views.MenuListCreateAPIView.as_view(), name='menu-create'),
     path('api/menus/<int:pk>/update/', views.MenuUpdateAPIView.as_view(), name='menu-update'),
+    path('api/menus/<int:pk>/delete/', views.MenuDeleteAPIView.as_view(), name='menu-delete'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.ADMIN_ENABLED:
