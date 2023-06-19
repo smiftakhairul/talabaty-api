@@ -108,21 +108,32 @@ class MenuRetrieveAPIView(generics.RetrieveAPIView):
 #     queryset = Menu.objects.order_by('-id')
 #     serializer_class = MenuSerializer
 class MenuListAPIView(generics.ListAPIView):
-    queryset = Menu.objects.order_by('-id')
     serializer_class = MenuSerializer
     pagination_class = PageNumberPagination
     pagination_class.page_size = 9
-    
+
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')
+        queryset = Menu.objects.order_by('-id')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+                queryset = queryset.filter(user_id=user_id)
+            except ValueError:
+                pass
+
+        return queryset
+
     def get_paginated_response(self, data):
         total_items = self.paginator.page.paginator.count
         page_size = self.pagination_class.page_size
         total_pages = ceil(total_items / page_size)
-        page = self.paginate_queryset(self.queryset)
-        current_page = self.paginator.page.number if page else None
+        current_page = self.paginator.page.number if self.paginator.page else None
         return Response({
             'total_pages': total_pages,
             'current_page': current_page,
-            'count': self.paginator.page.paginator.count,
+            'count': total_items,
             'next': self.paginator.get_next_link(),
             'previous': self.paginator.get_previous_link(),
             'results': data
