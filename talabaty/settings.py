@@ -47,7 +47,10 @@ INSTALLED_APPS = [
     'talabaty',
     'django_cleanup.apps.CleanupConfig',
     'django_seed',
+    'django.contrib.sites',
 ]
+
+DEFAULT_DOMAIN = 'http://localhost:8000'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

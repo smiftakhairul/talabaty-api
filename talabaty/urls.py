@@ -23,8 +23,12 @@ urlpatterns = [
     path('api/shops/<int:id>/', views.ShopDetailAPIView.as_view(), name='shop-detail'),
     
     path('api/orders/create/', views.OrderCreateAPIView.as_view(), name='order-create'),
+    path('api/orders/<int:pk>/update/', views.OrderUpdateAPIView.as_view(), name='order-update'),
     
     path('api/user-orders/<int:id>/', views.UserOrderAPIView.as_view(), name='user-detail'),
+    path('api/user-paginated-orders/<int:id>/', views.UserPaginatedOrderAPIView.as_view(), name='user-detail-paginated'),
+    path('api/shop-orders/<int:id>/', views.ShopOrderAPIView.as_view(), name='shop-detail'),
+    path('api/shop-paginated-orders/<int:id>/', views.ShopPaginatedOrderAPIView.as_view(), name='shop-detail-paginated'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.ADMIN_ENABLED:

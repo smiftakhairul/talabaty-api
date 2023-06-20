@@ -2,7 +2,7 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, viewsets
-from .serializers import RegisterSerializer, UserSerializer, UserProfileSerializer, UserUpdateSerializer, CategorySerializer, MenuSerializer, ShopSerializer, OrderSerializer, UserOrderSerializer
+from .serializers import RegisterSerializer, UserSerializer, UserProfileSerializer, OrderUpdateSerializer, UserUpdateSerializer, CategorySerializer, MenuSerializer, ShopSerializer, OrderSerializer, UserOrderSerializer, UserPaginatedOrderSerializer, ShopOrderSerializer, ShopPaginatedOrderSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
@@ -183,6 +183,10 @@ class OrderCreateAPIView(generics.CreateAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class OrderUpdateAPIView(generics.UpdateAPIView):
+    serializer_class = OrderUpdateSerializer
+    queryset = Order.objects.all()
+
 class OrderListByCustomerAPIView(generics.ListAPIView):
     serializer_class = OrderSerializer
 
@@ -196,4 +200,19 @@ class OrderListByCustomerAPIView(generics.ListAPIView):
 class UserOrderAPIView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserOrderSerializer
+    lookup_field = 'id'
+
+class UserPaginatedOrderAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserPaginatedOrderSerializer
+    lookup_field = 'id'
+
+class ShopOrderAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = ShopOrderSerializer
+    lookup_field = 'id'
+
+class ShopPaginatedOrderAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = ShopPaginatedOrderSerializer
     lookup_field = 'id'

@@ -2,11 +2,23 @@ from rest_framework import serializers
 from .models import User, UserProfile, Category, Menu, OrderMenu, Order
 from urllib.parse import urljoin, quote
 from django.conf import settings
+from rest_framework.pagination import PageNumberPagination
+from math import ceil
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone', 'first_name', 'role']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        profile = UserProfile.objects.filter(user_id=instance.id).first()
+        if profile:
+            profile_serializer = UserProfileSerializer(profile, context=self.context)
+            representation['profile'] = profile_serializer.data
+        else:
+            representation['profile'] = None
+        return representation
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -55,13 +67,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         request = self.context.get('request')
         if obj.profile_image:
-            return request.build_absolute_uri(obj.profile_image.url)
+            base_url = settings.DEFAULT_DOMAIN
+            media_url = urljoin(base_url, settings.MEDIA_URL)
+            return urljoin(media_url, quote(obj.profile_image.url))
         return None
     
     def get_banner_image(self, obj):
         request = self.context.get('request')
         if obj.banner_image:
-            return request.build_absolute_uri(obj.banner_image.url)
+            base_url = settings.DEFAULT_DOMAIN
+            media_url = urljoin(base_url, settings.MEDIA_URL)
+            return urljoin(media_url, quote(obj.banner_image.url))
         return None
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -136,6 +152,29 @@ class OrderSerializer(serializers.ModelSerializer):
         
         return representation
 
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    uid = serializers.CharField(required=False)
+    amount = serializers.CharField(required=False)
+    net_amount = serializers.CharField(required=False)
+    location = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['shop'] = UserSerializer(instance.shop).data
+        representation['customer'] = UserSerializer(instance.customer).data
+        representation['rider'] = UserSerializer(instance.rider).data
+        
+        order_menus = OrderMenu.objects.filter(order=instance)
+        order_menu_serializer = OrderMenuSerializer(order_menus, many=True, context=self.context)
+        representation['order_menus'] = order_menu_serializer.data
+        
+        return representation
+
 class UserOrderSerializer(serializers.ModelSerializer):
     orders = serializers.SerializerMethodField()
     
@@ -147,4 +186,74 @@ class UserOrderSerializer(serializers.ModelSerializer):
         orders = Order.objects.filter(customer=obj).order_by('-id')
         order_serializer = OrderSerializer(orders, many=True, context=self.context)
         return order_serializer.data
+
+
+class UserPaginatedOrderSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone', 'first_name', 'role', 'orders']
+
+    def get_orders(self, obj):
+        orders = Order.objects.filter(customer=obj).order_by('-id')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  # Set the desired page size
+        paginated_orders = paginator.paginate_queryset(orders, self.context['request'])
+        order_serializer = OrderSerializer(paginated_orders, many=True, context=self.context)
+        total_items = paginator.page.paginator.count
+        page_size = paginator.page_size
+        total_pages = ceil(total_items / page_size)
+        current_page = paginator.page.number if paginator.page else None
+        
+        return {
+            'total_pages': total_pages,
+            'current_page': current_page,
+            'count': total_items,
+            'next': paginator.get_next_link(),
+            'previous': paginator.get_previous_link(),
+            'results': order_serializer.data
+        }
+
+class ShopOrderSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone', 'first_name', 'role', 'orders']
+
+    def get_orders(self, obj):
+        orders = Order.objects.filter(shop=obj).order_by('-id')
+        order_serializer = OrderSerializer(orders, many=True, context=self.context)
+        return order_serializer.data
+
+
+class ShopPaginatedOrderSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone', 'first_name', 'role', 'orders']
+
+    def get_orders(self, obj):
+        orders = Order.objects.filter(shop=obj).order_by('-id')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 5  # Set the desired page size
+        paginated_orders = paginator.paginate_queryset(orders, self.context['request'])
+        order_serializer = OrderSerializer(paginated_orders, many=True, context=self.context)
+        total_items = paginator.page.paginator.count
+        page_size = paginator.page_size
+        total_pages = ceil(total_items / page_size)
+        current_page = paginator.page.number if paginator.page else None
+        
+        return {
+            'total_pages': total_pages,
+            'current_page': current_page,
+            'count': total_items,
+            'next': paginator.get_next_link(),
+            'previous': paginator.get_previous_link(),
+            'results': order_serializer.data
+        }
 
