@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/menus/create/', views.MenuListCreateAPIView.as_view(), name='menu-create'),
     path('api/menus/<int:pk>/update/', views.MenuUpdateAPIView.as_view(), name='menu-update'),
     path('api/menus/<int:pk>/delete/', views.MenuDeleteAPIView.as_view(), name='menu-delete'),
+    path('api/menus/search/', views.MenuSearchAPIView.as_view(), name='menu-search'),
     
     path('api/shops/', views.ShopListAPIView.as_view(), name='shop-menu-list'),
     path('api/shops/<int:id>/', views.ShopDetailAPIView.as_view(), name='shop-detail'),

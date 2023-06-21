@@ -216,3 +216,12 @@ class ShopPaginatedOrderAPIView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = ShopPaginatedOrderSerializer
     lookup_field = 'id'
+
+class MenuSearchAPIView(generics.ListAPIView):
+    serializer_class = MenuSerializer
+
+    def get_queryset(self):
+        keyword = self.request.query_params.get('keyword')
+        queryset = Menu.objects.filter(name__icontains=keyword)[:20]
+        return queryset
+
